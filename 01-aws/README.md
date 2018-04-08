@@ -13,3 +13,4 @@ This was required before the ec2 task would run.
 pip install boto
 ```
 
+_Note_: Change the `group`, `vpc_subnet_id`, `key_name`, and `region` as appropriate for your deployment.
