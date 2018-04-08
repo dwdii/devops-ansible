@@ -1,0 +1,43 @@
+-   name: Create an ElasticSearch cluster
+    hosts: localhost
+    connection: localhost
+    become: False
+    vars:
+        key_name: default
+    tasks:
+        - name: Launch cluster
+          ec2:
+            key_name: "{{ key_name }}"
+            instance_type: t2.micro
+            image: ami-b81dbfc5
+            wait: yes
+            group_id: sg-28e61761
+            exact_count: 3
+            count_tag:
+                role: ElasticSearch-Cluster
+            vpc_subnet_id: subnet-eeb51db4
+            assign_public_ip: yes
+            instance_tags:
+                ansible: yes
+                role: ElasticSearch-Cluster
+            region: us-east-1
+          register: ec2
+          
+        - name: All instance public IPs to host group
+          add_host: hostname={{ item.public_ip }} groups=ec2hosts
+          loop: "{{ ec2.instances }}"
+          
+        - debug: 
+            msg: "Instance {{ item.id }} in state {{item.state}}"
+          with_items: "{{ ec2.instances }}"          
+          
+- hosts: ec2hosts
+  name: Configuration play
+  user: centos
+  gather_facts: true
+  tasks:
+    - name: Check NTP service
+      service: name=ntpd state=started
+        
+
+        
