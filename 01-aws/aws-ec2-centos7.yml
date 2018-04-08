@@ -1,0 +1,23 @@
+-   name: Create an instance
+    hosts: localhost
+    connection: localhost
+    become: False
+    vars:
+        key_name: default
+    tasks:
+        - name: Launch instance
+          ec2:
+            key_name: "{{ key_name }}"
+            instance_type: t2.micro
+            image: ami-b81dbfc5
+            wait: yes
+            group: Dwdii-DefaultLinux
+            count: 1
+            vpc_subnet_id: subnet-eeb51db4
+            assign_public_ip: yes
+            instance_tags:
+                ansible: yes
+            region: us-east-1
+          register: ec2
+        
+        
