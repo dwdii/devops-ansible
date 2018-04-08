@@ -20,7 +20,7 @@ sudo apt-get -y install python-dev
 sudo apt-get -y install libffi-dev
 sudo apt-get -y install libssl-dev
 
-pip install ansible
+pip install ansible --user
 
 echo 'PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc
 ```

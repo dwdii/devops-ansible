@@ -14,3 +14,18 @@ pip install boto
 ```
 
 _Note_: Change the `group`, `vpc_subnet_id`, `key_name`, and `region` as appropriate for your deployment.
+
+
+### ec2_instance_facts 
+
+ec2_instance_facts requires boto3 per https://docs.ansible.com/ansible/devel/modules/ec2_instance_facts_module.html
+
+```
+pip install boto3
+```
+
+### SSH and Fingerprint Authenticity
+
+https://stackoverflow.com/questions/32297456/how-to-ignore-ansible-ssh-authenticity-checking
+
+Refer to ansible.cfg `host_key_checking`, but the ssh-keyscan suggestion in the above linked stackoverflow article is a better solution.
