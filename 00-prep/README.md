@@ -25,5 +25,15 @@ pip install ansible --user
 echo 'PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc
 ```
 
+# Ansible Customizations
+
+https://github.com/ansible/ansible/issues/11050
+
+In ansible.cfg, the following config will disable colorized shell output:
+
+```
+nocolor=1
+```
+
 
 

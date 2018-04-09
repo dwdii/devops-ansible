@@ -29,3 +29,29 @@ pip install boto3
 https://stackoverflow.com/questions/32297456/how-to-ignore-ansible-ssh-authenticity-checking
 
 Refer to ansible.cfg `host_key_checking`, but the ssh-keyscan suggestion in the above linked stackoverflow article is a better solution.
+
+### SSH Private Key
+
+https://stackoverflow.com/questions/33795607/how-to-define-ssh-private-key-for-servers-fetched-by-dynamic-inventory-in-files
+
+Refer to ansible.cfg `private_key_file`, but the above linked stackoverflow article provides some other options as well.
+
+```
+WARNING: UNPROTECTED PRIVATE KEY FILE!
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+Permissions 0777 for '/mnt/c/Users/Dan/.../key.pem are too open.
+It is required that your private key files are NOT accessible by others.
+This private key will be ignored.
+Load key "/mnt/c/Users/Dan/.../key.pem": bad permissions
+Permission denied (publickey,gssapi-keyex,gssapi-with-mic).
+```
+
+Received the above warning about my private key... have since rectified this. 
+One step was to copy the pem file to my linux subsystem user's home directory, and 
+chmod to apply acceptable permissions. 
+
+https://stackoverflow.com/questions/9270734/ssh-permissions-are-too-open-error
+
+```
+chmod 600 ~/key.pem
+```

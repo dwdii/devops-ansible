@@ -4,6 +4,7 @@
     become: False
     vars:
         key_name: default
+        ansible_ssh_private_key_file: 
     tasks:
         - name: Launch instance
           ec2:
@@ -19,5 +20,20 @@
                 ansible: yes
             region: us-east-1
           register: ec2
+          
+        - name: All instance public IPs to host group
+          add_host: hostname={{ item.public_ip }} groups=ec2hosts
+          loop: "{{ ec2.instances }}"
+          
+        - debug: 
+            msg: "Instance {{ item.id }} is {{item.state}} at {{item.public_ip}}"
+          with_items: "{{ ec2.instances }}"          
         
-        
+- hosts: ec2hosts
+  name: Configuration play
+  user: centos
+  gather_facts: true
+  tasks:
+    - name: Check NTP service
+      service: name=ntpd state=started
+                
