@@ -4,40 +4,110 @@
     become: False
     vars:
         key_name: default
+        instance_type: t2.micro
+        group_id: sg-28e61761
+        ec2_volume_size: 8
     tasks:
-        - name: Launch cluster
+        - name: Launch Cluster - master nodes
           ec2:
             key_name: "{{ key_name }}"
-            instance_type: t2.micro
+            instance_type: "{{ instance_type }}"
             image: ami-b81dbfc5
             wait: yes
-            group_id: sg-28e61761
-            exact_count: 3
+            group_id: "{{group_id}}"
+            exact_count: 2
             count_tag:
                 role: ElasticSearch-Cluster
+                es-role: master
             vpc_subnet_id: subnet-eeb51db4
             assign_public_ip: yes
             instance_tags:
                 ansible: yes
                 role: ElasticSearch-Cluster
+                es-role: master
             region: us-east-1
-          register: ec2
-          
-        - name: All instance public IPs to host group
+            volumes:
+              - device_name: /dev/sda1
+                volume_type: gp2
+                volume_size: "{{ ec2_volume_size }}"
+                delete_on_termination: yes
+          register: master_nodes
+
+        - name: Add master nodes public IPs to host group
           add_host: hostname={{ item.public_ip }} groups=ec2hosts
-          loop: "{{ ec2.instances }}"
+          loop: "{{ master_nodes.instances }}"
           
         - debug: 
             msg: "Instance {{ item.id }} in state {{item.state}}"
-          with_items: "{{ ec2.instances }}"          
-          
-- hosts: ec2hosts
-  name: Configuration play
-  user: centos
+          with_items: "{{ master_nodes.instances }}"          
+
+        - name: Launch Cluster - data nodes
+          ec2:
+            key_name: "{{ key_name }}"
+            instance_type: "{{ instance_type }}"
+            image: ami-b81dbfc5
+            wait: yes
+            group_id: "{{group_id}}"
+            exact_count: 1
+            count_tag:
+                role: ElasticSearch-Cluster
+                es-role: data
+            vpc_subnet_id: subnet-eeb51db4
+            assign_public_ip: yes
+            instance_tags:
+                ansible: yes
+                role: ElasticSearch-Cluster
+                es-role: data
+            volumes:
+              - device_name: /dev/sda1
+                volume_type: gp2
+                volume_size: "{{ ec2_volume_size }}"
+                delete_on_termination: yes
+            region: us-east-1
+          register: data_nodes
+
+        - name: Add data nodes public IPs to host group
+          add_host: hostname={{ item.public_ip }} groups=ec2hosts
+          loop: "{{ data_nodes.instances }}"
+
+        - debug: 
+            msg: "Instance {{ item.id }} in state {{item.state}}"
+          with_items: "{{ data_nodes.instances }}"          
+
+- name: Configuration play
   gather_facts: true
+  hosts: ec2hosts
+  user: centos
+  vars:
+    ntp_timezone: America/New_York
+  roles:
+    - name: geerlingguy.ntp
+      become: yes
   tasks:
     - name: Check NTP service
       service: name=ntpd state=started
-        
-
+      
+  
+- name: Install ElasticSearch on Master nodes
+- hosts: master_nodes
+  user: centos
+  roles:
+    - {role: elastic.elasticsearch, es_instance_name: "node1", es_heap_size: "1g",
+        es_config: {
+            cluster.name: "dwdii-cluster",
+            discovery.zen.ping.unicast.hosts: "elastic02:9300",
+            http.port: 9200,
+            transport.tcp.port: 9300,
+            node.data: false,
+            node.master: true,
+            bottstrap.memory_lock: false,
+            }
+        }
+  vars:
+    es_scripts: false
+    es_templates: false
+    es_version_lock: false
+    ansible_user: ansible
+    es_plugins:
+      - plugins: ingest-geoip
         

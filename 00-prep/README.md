@@ -35,5 +35,19 @@ In ansible.cfg, the following config will disable colorized shell output:
 nocolor=1
 ```
 
+# Ansible Galaxy
+
+First add the following (or your preferred variant, to your ~/.bashrc
+
+```
+export ANSIBLE_ROLES_PATH=$HOME/.ansible/roles
+```
+
+Then install what ever roles are required using ansible-galaxy
+
+```
+ansible-galaxy install elasticsearch
+ansible-galaxy install geerlingguy.ntp
+```
 
 
