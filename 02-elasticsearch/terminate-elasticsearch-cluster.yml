@@ -12,6 +12,7 @@
         region: "{{ aws_region }}"
         filters:
             "tag:role": ElasticSearch-Cluster
+            "instance-state-name": running
       register: ec2_facts
       
       # , state={{item.state}}"
