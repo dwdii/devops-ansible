@@ -4,7 +4,7 @@
     become: False
     vars:
         key_name: default
-        instance_type: t2.micro
+        instance_type: t2.large
         group_id: sg-28e61761
         ec2_volume_size: 8
     tasks:
@@ -33,10 +33,14 @@
                 delete_on_termination: yes
           register: master_nodes
 
-        - name: Add master nodes public IPs to host group
+        - name: Add master nodes public IPs to ec2hosts group
           add_host: hostname={{ item.public_ip }} groups=ec2hosts
           loop: "{{ master_nodes.instances }}"
-          
+
+        - name: Add master nodes public IPs to ec2hosts_master group
+          add_host: hostname={{ item.public_ip }} groups=ec2hosts_master
+          loop: "{{ master_nodes.instances }}"
+
         - debug: 
             msg: "Instance {{ item.id }} in state {{item.state}}"
           with_items: "{{ master_nodes.instances }}"          
@@ -73,6 +77,15 @@
         - debug: 
             msg: "Instance {{ item.id }} in state {{item.state}}"
           with_items: "{{ data_nodes.instances }}"          
+          
+- name: Wait for cluster
+  hosts: ec2hosts
+  user: centos
+  gather_facts: false
+  tasks:
+    - wait_for_connection:
+        delay: 20
+        sleep: 5
 
 - name: Configuration play
   gather_facts: true
@@ -83,14 +96,15 @@
   roles:
     - name: geerlingguy.ntp
       become: yes
-  tasks:
-    - name: Check NTP service
-      service: name=ntpd state=started
+  # tasks:
+  #  - name: Check NTP service
+  #    service: name=ntpd state=started
       
   
 - name: Install ElasticSearch on Master nodes
-- hosts: master_nodes
+  hosts: ec2hosts_master
   user: centos
+  become: yes
   roles:
     - {role: elastic.elasticsearch, es_instance_name: "node1", es_heap_size: "1g",
         es_config: {
@@ -100,14 +114,15 @@
             transport.tcp.port: 9300,
             node.data: false,
             node.master: true,
-            bottstrap.memory_lock: false,
+            bootstrap.memory_lock: false,
             }
         }
   vars:
     es_scripts: false
     es_templates: false
     es_version_lock: false
-    ansible_user: ansible
+    es_java_install: false
+    #ansible_user: ansible
     es_plugins:
       - plugins: ingest-geoip
         
